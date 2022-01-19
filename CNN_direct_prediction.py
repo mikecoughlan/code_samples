@@ -84,7 +84,7 @@ def omni_prep(path):
 	df.set_index('Epoch', inplace=True, drop=True)
 	df.index = pd.to_datetime(df.index)
 
-	cols = [col for col in df.columns]								# creates a list to store the column names from the omni df for later use. 
+	cols = [col for col in df.columns]			# creates a list to store the column names from the omni df for later use. 
 
 	return df, cols
 
@@ -108,7 +108,7 @@ def ace_prep(path):
 	df.set_index('ACEepoch', inplace=True, drop=True)
 	df.index = pd.to_datetime(df.index)
 
-	cols = [col for col in df.columns]								# creates a list to store the column names from the omni df for later use. 
+	cols = [col for col in df.columns]				# creates a list to store the column names from the omni df for later use. 
 
 	return df, cols
 
@@ -367,7 +367,7 @@ def prep_train_data(df, stime, etime, lead, recovery, time_history):
 	# Removing data not segmented for testing
 	start = sorted([((datetime.strptime(s, '%Y-%m-%d %H:%M:%S'))) for s in stime])			# larger df is in time order, the sorted list is used to avoid removing incorrect data
 	end = sorted([((datetime.strptime(e, '%Y-%m-%d %H:%M:%S'))) for e in etime])
-	data = []																	# creats a list to store the seperate dfs that will be segmented for training. Must be kept seperate due to importance of time series 
+	data = []											# creats a list to store the seperate dfs that will be segmented for training. Must be kept seperate due to importance of time series 
 	for i in range(len(start)):
 		if i == 0:
 			data.append(df[df.index < start[i]])
@@ -411,7 +411,7 @@ def prep_train_data(df, stime, etime, lead, recovery, time_history):
 	train_X, train_y = np.empty((1, time_history, n_features)), np.empty((1))		# creating empty arrays to combine all storm data
 	for storm, storm_y, i in zip(storms, y, range(len(storms))):
 		X, x1 = split_sequences(storm, storm_y, time_history)		# calling the split_sequences function for each of the storms. Doing them individually prevents data leakage
-		if len(X) != 0:												# checking to make sure not everything got dropped in the split sequence function
+		if len(X) != 0:								# checking to make sure not everything got dropped in the split sequence function
 			train_X = np.concatenate([train_X, X])						# concatinating all of the storm data together now that they've been put into 3D arrays
 			train_y = np.concatenate([train_y, x1])
 
@@ -434,10 +434,10 @@ def create_CNN_model(model_config, n_features, loss='mse', early_stop_patience=3
 	model = Sequential()
 
 	model.add(Conv2D(model_config['filters'], (1,2), padding='same',
-									activation='relu', input_shape=(model_config['time_history'], n_features, 1)))		# fitting the model. The (1,2) is the sliding window that 
-																														# moves over the data. 
-	model.add(MaxPooling2D())																							# MaxPool layer reduces the data and makes the model run faster
-	model.add(Flatten())																								# reducing the demensionallity of the data, shows imporvement over models without this layer
+			activation='relu', input_shape=(model_config['time_history'], n_features, 1)))		# fitting the model. The (1,2) is the sliding window that 
+														# moves over the data. 
+	model.add(MaxPooling2D())										# MaxPool layer reduces the data and makes the model run faster
+	model.add(Flatten())											# reducing the demensionallity of the data, shows imporvement over models without this layer
 	model.add(Dense(1024, activation='relu'))
 	model.add(Dropout(0.2))
 	model.add(Dense(128, activation='relu'))
@@ -445,7 +445,7 @@ def create_CNN_model(model_config, n_features, loss='mse', early_stop_patience=3
 	model.add(Dense(1, activation='relu'))								# final layer, can play with the activation a bit here
 
 
-	opt = tf.keras.optimizers.Adam(learning_rate=1e-6)														# learning rat that showed improvement over the CNN
+	opt = tf.keras.optimizers.Adam(learning_rate=1e-6)								# learning rat that showed improvement over the CNN
 	model.compile(optimizer=opt, loss=loss)					
 	early_stop = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=early_stop_patience)		# stops the model from overfitting if it doesn't improve the loss after some number of epochs 
 
@@ -489,7 +489,7 @@ def fit_CNN(model, train_dict, model_config, early_stop, station, first_time=Tru
 
 	if not first_time:
 
-		model = load_model('models/CNN_{0}_SYM_updated.h5'.format(station))							# loading the already fitted model
+		model = load_model('models/CNN_{0}_SYM_updated.h5'.format(station))			# loading the already fitted model
 
 	return model
 
@@ -503,18 +503,18 @@ def making_predictions(model, test_dict):
 
 	for key in test_dict:
 
-		Xtest = test_dict[key]['Y']														# loading the correct testing data from the testing dict
+		Xtest = test_dict[key]['Y']								# loading the correct testing data from the testing dict
 		Xtest = Xtest.reshape((Xtest.shape[0], Xtest.shape[1], Xtest.shape[2], 1))		# reshaping properly
 	
-		predicted = model.predict(Xtest, verbose=1)										# predicting
+		predicted = model.predict(Xtest, verbose=1)						# predicting
 
-		predicted = tf.gather(predicted, [0], axis=1)									# model outputs a tensorflow tensor, this grabs the output data	
-		predicted = predicted.numpy()													# turns it into a numpy array
-		predicted = pd.Series(predicted.reshape(len(predicted),)) 						# then turns it into a pd.series
+		predicted = tf.gather(predicted, [0], axis=1)					# model outputs a tensorflow tensor, this grabs the output data	
+		predicted = predicted.numpy()							# turns it into a numpy array
+		predicted = pd.Series(predicted.reshape(len(predicted),)) 			# then turns it into a pd.series
 
-		df = test_dict[key]['real_df']													# re-orienting ourselves in the sub dict containing the real data
+		df = test_dict[key]['real_df']							# re-orienting ourselves in the sub dict containing the real data
 
-		df['predicted'] = predicted	 													# storing the predictions in the same dataframe
+		df['predicted'] = predicted	 						# storing the predictions in the same dataframe
 
 
 	return test_dict
@@ -670,8 +670,8 @@ def main(path, config, model_config, station, first_time=True):
 	df, ace_df = data_prep(path, config['thresholds'], station=station, do_calc=True)  	# calling all of the data prep functuons
 	if first_time==True:
 		train_dict, scaler = prep_train_data(df, config['test_storm_stime'], config['test_storm_etime'], 
-																					config['lead'], config['recovery'], model_config['time_history'])  		# calling the training data prep
-		with open('models/minmax_{0}_{1}.pkl'.format(str(station), str(config['disc'])), 'wb') as f:								# saving the scaler for future use
+							config['lead'], config['recovery'], model_config['time_history'])  	# calling the training data prep
+		with open('models/minmax_{0}_{1}.pkl'.format(str(station), str(config['disc'])), 'wb') as f:			# saving the scaler for future use
 			pickle.dump(scaler, f)
 	if first_time==False:
 		train_dict=pd.DataFrame()																																										# creates empty dataframe to avoid an unidentified variable error
@@ -680,23 +680,23 @@ def main(path, config, model_config, station, first_time=True):
 	
 	# calling the test data prep function
 	test_dict, n_features = prep_test_data(df, ace_df, config['test_storm_stime'], config['test_storm_etime'],
-																					model_config['time_history'], scaler, station)
+						model_config['time_history'], scaler, station)
 	tf.keras.backend.clear_session()																																					# clears any old saved model parameters.
-	MODEL, early_stop = create_CNN_model(model_config, n_features, loss='mse', early_stop_patience=25)				# creating the model
+	MODEL, early_stop = create_CNN_model(model_config, n_features, loss='mse', early_stop_patience=25)			# creating the model
 	model = fit_CNN(MODEL, train_dict, model_config, early_stop, station, first_time=first_time, val_size=0.2)  		# fitting the LSTM
 	test_dict = making_predictions(model, test_dict)																													# making the predictions
 
 	reindex_and_save_csv(test_dict)		# calling the function that saves the results dataframes as a csv
 	
-	classification(test_dict, config['thresholds'], config['window'], station, config['disc'])														# calling classification function
-	for stime, etime, i in zip(config['test_storm_stime'], config['test_storm_etime'], range(len(test_dict))):						# looping through the storms and plotting the results for each
-		plot_outputs(test_dict['storm_{0}'.format(i)]['real_df'], stime, etime, station=station, disc=config['disc'])				# calling the plot_outputs function for each storm
+	classification(test_dict, config['thresholds'], config['window'], station, config['disc'])					# calling classification function
+	for stime, etime, i in zip(config['test_storm_stime'], config['test_storm_etime'], range(len(test_dict))):			# looping through the storms and plotting the results for each
+		plot_outputs(test_dict['storm_{0}'.format(i)]['real_df'], stime, etime, station=station, disc=config['disc'])		# calling the plot_outputs function for each storm
 
 
 
 if __name__ == '__main__':
 
-	station = 'OTT'						# the 3 letter code that identifies the station being examined 
+	station = 'OTT'		# the 3 letter code that identifies the station being examined 
 
 	main(projectDir, CONFIG, MODEL_CONFIG, station, first_time=True)
 
